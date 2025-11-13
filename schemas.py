@@ -1,48 +1,38 @@
 """
-Database Schemas
+Database Schemas for the EM Waves app
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model corresponds to a MongoDB collection (lowercased class name).
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List
 
-# Example schemas (replace with your own):
+
+class Preference(BaseModel):
+    last_frequency_hz: Optional[float] = Field(
+        None, description="Last used frequency in Hz"
+    )
+    last_wavelength_m: Optional[float] = Field(
+        None, description="Last used wavelength in meters"
+    )
+
 
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
     name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    email: EmailStr = Field(..., description="Email address")
+    password_hash: str = Field(..., description="Password hash (server-side only)")
+    salt: str = Field(..., description="Per-user salt for password hashing")
+    preferences: Optional[Preference] = Field(
+        default=None, description="Saved UI preferences"
+    )
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
 
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class WaveContent(BaseModel):
+    key: str = Field(..., description="Unique key of the wave band, e.g., 'radio'")
+    label: str = Field(..., description="Human-readable label")
+    min_freq_hz: float = Field(..., description="Minimum frequency (Hz) of band")
+    max_freq_hz: float = Field(..., description="Maximum frequency (Hz) of band")
+    min_wavelength_m: float = Field(..., description="Minimum wavelength (m) of band")
+    max_wavelength_m: float = Field(..., description="Maximum wavelength (m) of band")
+    uses: List[str] = Field(default_factory=list, description="Common uses")
+    warnings: List[str] = Field(default_factory=list, description="Safety guidance")
